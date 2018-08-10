@@ -18,9 +18,7 @@ class luo(lv,ma):
         super(luo,self).__init__()
 
     def getname(self):
-
         return "大马猴"
-
 
 
 l = luo()
