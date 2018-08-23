@@ -9,11 +9,8 @@ class Phone():
         return msg
     def chong(self):
         print("充电")
-
     def play(self):
         print("办公")
-
-
 
 xm = Phone("红色","MI mix")
 xm2 = Phone("红色","MI mix2")
