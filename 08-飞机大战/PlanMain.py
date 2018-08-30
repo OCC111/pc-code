@@ -1,5 +1,4 @@
 import pygame
-
 from pygame.locals import *
 from MySprite import *
 
@@ -14,7 +13,7 @@ class PlaneGame(object):
 		self.__create_sprites()
 
 		pygame.time.set_timer(CREATE_ENEMY_EVENT,1000)#敌机定时事件
-#pygame.time.set_timer(FIRE_BULLET,200)#子弹定时事件
+		pygame.time.set_timer(FIRE_BULLET,200)#子弹定时事件
 		#self.enemy_group = pygame.sprite.Group() #敌机精灵组
 		self.count = 0
 		#得分
@@ -38,13 +37,14 @@ class PlaneGame(object):
 		BG1 = BackGroundSprite()
 		BG2 = BackGroundSprite(True)
 		self.bg_group = pygame.sprite.Group(BG1,BG2)
-
+		self.enemy = EnemySprite()
 		self.enemy1_down_group = pygame.sprite.Group()#摧毁效果精灵组
 		self.enemy_group = pygame.sprite.Group()#创建敌机精灵组
 
 		self.hero = HeroSprite()
 		self.hero_group = pygame.sprite.Group(self.hero)
 
+		self.hero1_down_group = pygame.sprite.Group()
 
 	def __event_handler(self):
 		"""事件监听"""
@@ -54,8 +54,9 @@ class PlaneGame(object):
 			elif event.type == CREATE_ENEMY_EVENT:
 				# print("事件被触发了")
 				enemy = EnemySprite()
-				self.enemy_group.add(enemy)#通过add方法添加
-			elif event.type == FIRE_BULLET:
+				self.enemy_group.add(enemy)#通过add方法添加 
+				self.enemy.fires()
+			elif event.type == CREATE_BULLET_EVENT:
 				self.hero.fire()
 		keys_pressed = pygame.key.get_pressed()
 		if keys_pressed[pygame.K_RIGHT]:
@@ -67,7 +68,7 @@ class PlaneGame(object):
 		elif keys_pressed[pygame.K_UP]:
 			self.hero.speed1 = -5
 			self.hero.speed = 0
-		elif keys_pressed[pygame.K_DOWN]:
+		elif keys_pressed[pygame.K_DOWN]:  
 			self.hero.speed1 = 5
 			self.hero.speed = 0
 		else:
@@ -77,23 +78,24 @@ class PlaneGame(object):
 
 		if keys_pressed[pygame.K_SPACE]:
 			#print("子弹成功发射")
-			self.hero.fire()
-
-
+			self.hero.fire() 
 	def __check_collide(self):
 		"""碰撞检测"""
 		#英雄摧毁敌机
 		enemy_down = pygame.sprite.groupcollide(self.enemy_group,self.hero.bullet_group, True, True)
-
 		enemy1_down_group.add(enemy_down)
 		# 英雄被敌机摧毁
 		enemies = pygame.sprite.spritecollide(self.hero, self.enemy_group, True)
-
-
 		if len(enemies) > 0:
 	        # 让英雄牺牲
 			self.hero.kill()
-
+	        # 结束游戏
+			PlaneGame.__game_over()
+		hero_down = pygame.sprite.groupcollide(self.hero_group,self.enemy.bullets, True, True)
+		hero1_down_group.add(hero_down)
+		if len(hero_down) > 0:
+	        # 让英雄牺牲
+			self.hero.kill()
 	        # 结束游戏
 			PlaneGame.__game_over()
 	def __update_sprites(self):
@@ -120,6 +122,16 @@ class PlaneGame(object):
 		self.hero.bullet_group.update()
 		self.hero.bullet_group.draw(self.screen)
 
+		self.hero1_down_group.update()
+		self.hero1_down_group.draw(self.screen)
+		for hero1_down in  hero1_down_group:
+			self.screen.blit(hero1_down_surface[hero1_down.down1_index],hero1_down.rect)
+			if self.count % 15 == 0:
+				hero1_down.down1_index += 1
+			if hero1_down.down1_index == 3:
+				self.score += 5
+				hero1_down_group.remove(hero1_down)
+
 	@staticmethod
 	def __game_over():
 	   """游戏结束"""
@@ -127,7 +139,6 @@ class PlaneGame(object):
 	   print("游戏结束")
 	   pygame.quit()
 	   exit()
-
 
 	def drawText(self, text, posx, posy, textHeight=48, fontColor=(0, 0, 0), backgroudColor=(255, 255, 255)):
 		fontObj = pygame.font.Font(None, textHeight)  # 通过字体文件获得字体对象
